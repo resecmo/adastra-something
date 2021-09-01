@@ -1,5 +1,6 @@
 import json
 import requests
+from os import system
 
 with open("config.json") as config_file:
     config = json.load(config_file)
@@ -21,16 +22,9 @@ def fetch_adastra_snps(gene_name):
 adastra_snps = fetch_adastra_snps(config["gene_name"])
 print(f"{len(adastra_snps)} SNPs in ADASTRA")
 print(adastra_snps)
-
-
-with open(config["path_to_bed"]) as f:
-    bed_lines = f.readlines()
-    print(f"{len(bed_lines)} entries in BED")
-    for bed_line in bed_lines:
-        l = bed_line.split("\t")
-        l[-1] = l[-1][:-1]
-        for snp in adastra_snps:
-            if (snp[0] == l[0]) and (int(l[1]) <= snp[1] <= int(l[2])):
-                print(snp, l)
+with open(f"adastra-{config['gene_name']}.bed", "w") as out:
+    for chrom, loc in adastra_snps:
+        print(chrom, loc, loc, file=out, sep="\t")
+system("bedtools intersect -a adastra-HNF4A.bed -b ../cistrome_hg38/hg38_cistrome/HNF4A_HUMAN.A.bed")
 
 
