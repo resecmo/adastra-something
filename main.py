@@ -19,12 +19,16 @@ def fetch_adastra_snps(gene_name):
         #print(f'{snp["chromosome"]}:{snp["position"]}')
         positions.append((snp["chromosome"], snp["position"]))
     return positions
+
+
 adastra_snps = fetch_adastra_snps(config["gene_name"])
 print(f"{len(adastra_snps)} SNPs in ADASTRA")
-print(adastra_snps)
-with open(f"adastra-{config['gene_name']}.bed", "w") as out:
-    for chrom, loc in adastra_snps:
-        print(chrom, loc, loc, file=out, sep="\t")
-system("bedtools intersect -a adastra-HNF4A.bed -b ../cistrome_hg38/hg38_cistrome/HNF4A_HUMAN.A.bed")
 
+adastra_bed_filename = f"adastra-{config['gene_name']}.bed"
+with open(adastra_bed_filename, "w") as adastra_bed:
+    for chrom, loc in adastra_snps:
+        print(chrom, loc, loc, file=adastra_bed, sep="\t")
+print(f"Written SNPs in {adastra_bed_filename}")
+print("Intersections:")
+system(f"bedtools intersect -a {adastra_bed_filename} -b {config['path_to_bed']}")
 
