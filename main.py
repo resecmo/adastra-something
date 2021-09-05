@@ -2,9 +2,6 @@ import json
 import requests
 from os import system
 
-with open("config.json") as config_file:
-    config = json.load(config_file)
-
 
 def fetch_adastra_snps(gene_name):
     r = requests.get(f'https://adastra.autosome.ru/api/v3/search/snps/gene_name/{gene_name}')
@@ -21,14 +18,21 @@ def fetch_adastra_snps(gene_name):
     return positions
 
 
-adastra_snps = fetch_adastra_snps(config["gene_name"])
-print(f"{len(adastra_snps)} SNPs in ADASTRA")
+def intersect_adastra_bed(gene_name):
+    adastra_snps = fetch_adastra_snps(gene_name)
+    print(f"{len(adastra_snps)} SNPs in ADASTRA")
 
-adastra_bed_filename = f"adastra-{config['gene_name']}.bed"
-with open(adastra_bed_filename, "w") as adastra_bed:
-    for chrom, loc in adastra_snps:
-        print(chrom, loc, loc, file=adastra_bed, sep="\t")
-print(f"Written SNPs in {adastra_bed_filename}")
-print("Intersections:")
-system(f"bedtools intersect -a {adastra_bed_filename} -b {config['path_to_bed']}")
+    adastra_bed_filename = f"adastra-{gene_name}.bed"
+    with open(adastra_bed_filename, "w") as adastra_bed:
+        for chrom, loc in adastra_snps:
+            print(chrom, loc, loc, file=adastra_bed, sep="\t")
+    print(f"Written SNPs in {adastra_bed_filename}")
+    print("Intersections:")
+    system(f"bedtools intersect -a {adastra_bed_filename} -b {config['path_to_bed']}")
+
+
+if __name__ == "__main__":
+    with open("config.json") as config_file:
+        config = json.load(config_file)
+    intersect_adastra_bed(config["gene_name"])
 
