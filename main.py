@@ -29,7 +29,7 @@ def intersect_adastra_bed(gene_name, path_to_bed):
     print(f"Written SNPs in {adastra_bed_filename}")
     print("Intersections:")
 
-    system(f"bedtools intersect -a {adastra_bed_filename} -b {path_to_bed}")
+    system(f"bedtools intersect -a {path_to_bed} -b {adastra_bed_filename}")
 
 
 if __name__ == "__main__":
