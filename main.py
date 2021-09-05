@@ -25,7 +25,7 @@ def intersect_adastra_bed(gene_name, path_to_bed):
     adastra_bed_filename = f"adastra-{gene_name}.bed"
     with open(adastra_bed_filename, "w") as adastra_bed:
         for chrom, loc in adastra_snps:
-            print(chrom, loc, loc, file=adastra_bed, sep="\t")
+            print(chrom, loc, loc+1, file=adastra_bed, sep="\t")
     print(f"Written SNPs in {adastra_bed_filename}")
     print("Intersections:")
 
