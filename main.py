@@ -18,7 +18,7 @@ def fetch_adastra_snps(gene_name):
     return positions
 
 
-def intersect_adastra_bed(gene_name):
+def intersect_adastra_bed(gene_name, path_to_bed):
     adastra_snps = fetch_adastra_snps(gene_name)
     print(f"{len(adastra_snps)} SNPs in ADASTRA")
 
@@ -28,11 +28,13 @@ def intersect_adastra_bed(gene_name):
             print(chrom, loc, loc, file=adastra_bed, sep="\t")
     print(f"Written SNPs in {adastra_bed_filename}")
     print("Intersections:")
-    system(f"bedtools intersect -a {adastra_bed_filename} -b {config['path_to_bed']}")
+
+    system(f"bedtools intersect -a {adastra_bed_filename} -b {path_to_bed}")
 
 
 if __name__ == "__main__":
     with open("config.json") as config_file:
         config = json.load(config_file)
-    intersect_adastra_bed(config["gene_name"])
+    path_to_bed = config["bed_dir"] + f"/{config['gene_name']}_HUMAN.{config['quality']}.bed"
+    intersect_adastra_bed(config["gene_name"], path_to_bed)
 
