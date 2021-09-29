@@ -4,11 +4,11 @@ from os import system
 
 
 def fetch_adastra_snps(gene_name):
-    r = requests.get(f'https://adastra.autosome.ru/api/v3/search/snps/gene_name/{gene_name}')
+    r = requests.get(f'https://adastra.autosome.ru/api/v4/search/snps/gene_name/{gene_name}')
     if r.status_code == 200:
         resp = json.loads(r.text)
     else:
-        print(f"status code: {r.status_code}")
+        print(f"Searched for {gene_name}, got status code: {r.status_code}")
     adastra_snps = resp["results"]
     positions = []
     for snp in adastra_snps:
