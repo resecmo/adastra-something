@@ -18,14 +18,18 @@ def fetch_adastra_snps(gene_name):
     return positions
 
 
+def write_positions_in_bed(positions, filename):
+    with open(filename, "w") as bed:
+        for chrom, loc in positions:
+            print(chrom, loc-1, loc, file=bed, sep="\t")
+
+
 def intersect_adastra_bed(gene_name, path_to_bed):
     adastra_snps = fetch_adastra_snps(gene_name)
     print(f"{len(adastra_snps)} SNPs in ADASTRA")
 
     adastra_bed_filename = f"adastra-{gene_name}.bed"
-    with open(adastra_bed_filename, "w") as adastra_bed:
-        for chrom, loc in adastra_snps:
-            print(chrom, loc, loc+1, file=adastra_bed, sep="\t")
+    write_positions_in_bed(adastra_snps, adastra_bed_filename)
     print(f"Written SNPs in {adastra_bed_filename}")
     print("Intersections:")
 
