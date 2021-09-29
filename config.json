@@ -1,5 +1,5 @@
 {
-    "bed_dir": "/home/cistrome_hg38/hg38_cistrome",
+    "bed_dir": "/home/resecmo/vigg/cistrome_hg38/hg38_cistrome",
     "quality": "A",
     "gene_name": "HNF4A"
 }
