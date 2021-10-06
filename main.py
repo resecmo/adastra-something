@@ -8,7 +8,8 @@ def fetch_adastra_snps(gene_name):
     if r.status_code == 200:
         resp = json.loads(r.text)
     else:
-        print(f"Searched for {gene_name}, got status code: {r.status_code}")
+        #TODO choose or create proper exception
+        raise Exception(f"Searched for {gene_name}, got status code: {r.status_code}")
     adastra_snps = resp["results"]
     positions = []
     for snp in adastra_snps:
