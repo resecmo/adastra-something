@@ -17,7 +17,7 @@ def download_adastra_snps():
 
     Path("adastra_snps").mkdir(exist_ok=True)
     files = []
-    for gene in genes[620:625]:
+    for gene in genes:
         gene_name = gene['gene_name']
         try:
             positions = main.fetch_adastra_snps(quote_plus(gene_name))
@@ -37,12 +37,14 @@ def intersect(files):
         with open("config.json") as config_file:
             config = json.load(config_file)
         cistrome_bed = config["bed_dir"] + f"/{config['gene_name']}_HUMAN.{config['quality']}.bed"
-        print(gene)
         intersections = run(["bedtools", "intersect",  "-a", cistrome_bed, "-b", bed], capture_output=True)
-        result.append((gene, intersections.stdout))
+        intersections = intersections.stdout.decode().split('\n')[:-1]
+        intersections = [tuple(intersec.split('\t')) for intersec in intersections]
+        result.append((gene, intersections))
     return result
 
 
 if __name__ == "__main__":
-    print(intersect(download_adastra_snps()))
+    with open('intersections.txt', 'w') as f:
+        f.write(str(intersect(download_adastra_snps())))
 
