@@ -1,5 +1,6 @@
 {
     "bed_dir": "/home/resecmo/vigg/cistrome_hg38/hg38_cistrome",
     "quality": "A",
-    "gene_name": "HNF4A"
+    "gene_name": "HNF4A",
+    "base_api_url": "https://adastra.autosome.ru/api/v4/"
 }
