@@ -3,19 +3,42 @@ import requests
 from os import system
 
 
-def fetch_adastra_snps(gene_name):
-    r = requests.get(config['base_api_url'] + f'search/snps/gene_name/{gene_name}')
+with open("config.json") as config_file:
+    config = json.load(config_file)
+
+
+def fetch_all_tfs():
+    r = requests.get(config['base_api_url'] + f'browse/tf')
     if r.status_code == 200:
         resp = json.loads(r.text)
     else:
         #TODO choose or create proper exception
+        raise Exception(f"Tried to browse TFs, got status code: {r.status_code}")
+    tfs = resp["results"]
+    return [entry['name'] for entry in tfs]
+
+
+def fetch_adastra_snps(gene_name):
+    r = requests.get(config['base_api_url'] + 
+                     f'search/snps/advanced?page=1&size=1&offset=0&transcription_factors={gene_name}')
+    if r.status_code == 200:
+        resp = json.loads(r.text)
+        n_snps = resp['total']
+    else:
+        #TODO choose or create proper exception
         raise Exception(f"Searched for {gene_name}, got status code: {r.status_code}")
-    adastra_snps = resp["results"]
+    
+    #print(n_snps)
     positions = []
-    for snp in adastra_snps:
-        #print(json.dumps(snp, indent=2))
-        #print(f'{snp["chromosome"]}:{snp["position"]}')
-        positions.append((snp["chromosome"], snp["position"]))
+    for offset in range(0, n_snps, 100):  #TODO widen
+        url = config['base_api_url'] + \
+              f'search/snps/advanced?page=1&size=100&offset={offset}&transcription_factors={gene_name}'
+        result = requests.get(url)
+        snps_json = json.loads(result.text)['results']
+        for snp in snps_json:
+            positions.append((snp['chromosome'], snp['position']))
+    print(positions)
+    
     return positions
 
 
@@ -38,8 +61,8 @@ def intersect_adastra_bed(gene_name, path_to_bed):
 
 
 if __name__ == "__main__":
-    with open("config.json") as config_file:
-        config = json.load(config_file)
+    #with open("config.json") as config_file:
+    #    config = json.load(config_file)
     path_to_bed = config["bed_dir"] + f"/{config['gene_name']}_HUMAN.{config['quality']}.bed"
     intersect_adastra_bed(config["gene_name"], path_to_bed)
 
