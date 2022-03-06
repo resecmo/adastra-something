@@ -42,10 +42,18 @@ def fetch_adastra_snps(gene_name):
     return positions
 
 
-def write_positions_in_bed(positions, filename):
+def write_tuples_in_bed(tuples, filename):
     with open(filename, "w") as bed:
-        for chrom, loc in positions:
-            print(chrom, loc-1, loc, file=bed, sep="\t")
+        for tupl in tuples:
+            print(*tupl, file=bed, sep="\t")
+
+
+def write_positions_in_bed(positions, filename):
+    write_tuples_in_bed(map(lambda pos: (pos[0], pos[1]-1, pos[1]), positions),
+                        filename)
+    #with open(filename, "w") as bed:
+    #    for chrom, loc in positions:
+    #        print(chrom, loc-1, loc, file=bed, sep="\t")
 
 
 def intersect_adastra_bed(gene_name, path_to_bed):
