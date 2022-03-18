@@ -42,10 +42,21 @@ def fetch_adastra_snps(gene_name):
     return positions
 
 
-def write_positions_in_bed(positions, filename):
-    with open(filename, "w") as bed:
-        for chrom, loc in positions:
-            print(chrom, loc-1, loc, file=bed, sep="\t")
+def write_tuples_in_bed(tuples, filename, append=False):
+    file_mode = 'a' if append else 'w'
+    with open(filename, file_mode) as bed:
+        for tupl in tuples:
+            print(*tupl, file=bed, sep="\t")
+
+
+def write_positions_in_bed(positions, filename, label=None, append=False):
+    # chr is pos[0], loc is pos[1]
+    if label is None:
+        write_tuples_in_bed(map(lambda pos: (pos[0], pos[1]-1, pos[1]), positions),
+                            filename, append)
+    else:
+        write_tuples_in_bed(map(lambda pos: (pos[0], pos[1]-1, pos[1], label), positions),
+                            filename, append)
 
 
 def intersect_adastra_bed(gene_name, path_to_bed):
@@ -63,6 +74,6 @@ def intersect_adastra_bed(gene_name, path_to_bed):
 if __name__ == "__main__":
     #with open("config.json") as config_file:
     #    config = json.load(config_file)
-    path_to_bed = config["bed_dir"] + f"/{config['gene_name']}_HUMAN.{config['quality']}.bed"
+    path_to_bed = config["bed_dir"] + f"/{config['gene_name']}.{config['quality']}.bed"
     intersect_adastra_bed(config["gene_name"], path_to_bed)
 
