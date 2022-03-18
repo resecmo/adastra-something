@@ -5,6 +5,7 @@ from subprocess import run
 from urllib.parse import quote_plus
 
 import main
+import bedwriter
 
 
 def download_adastra_snps():
@@ -20,7 +21,7 @@ def download_adastra_snps():
     for gene in genes:
         gene_name = gene['gene_name']
         try:
-            positions = main.fetch_adastra_snps(quote_plus(gene_name))
+            positions = bedwriter.fetch_adastra_snps(quote_plus(gene_name))
         except Exception as e:  # TODO specify exception
             print(f"got exception in gene {gene_name}, skipping:\n{e}")
             continue
