@@ -8,7 +8,7 @@ import pandas as pd
 import bedwriter
 
 
-def find_asbs_near_eqtls(gene_id, gene_name, asbs_scope="all"):  # todo rename
+def find_asbs_near_eqtls(gene_id, gene_name, window_halfwidth=2000, asbs_scope="all"):  # todo rename
     """
     Searches for ASBs in vicinity of eQTLs with target `gene_name`; 
     possibly these TFs regulate `gene_name` expression?
@@ -27,12 +27,12 @@ def find_asbs_near_eqtls(gene_id, gene_name, asbs_scope="all"):  # todo rename
         raise ValueError("asbs_scope should be one of: \"all\", \"diabetes\"") 
     
     
-    request = requests.get(f'https://adastra.autosome.ru/api/v4/search/snps/eqtl_gene_id/' + gene_id)
+    request = requests.get(f'https://adastra.autosome.org/api/v4/search/snps/eqtl_gene_id/' + gene_id)
     eqtls = json.loads(request.text)['results']
 
 
 
-    window_halfwidth = 2000
+    #window_halfwidth = 2000
     eqtl_tuples = []
     for eqtl in eqtls:
         eqtl_tuples.append((eqtl['chromosome'],
@@ -60,8 +60,9 @@ def find_asbs_near_eqtls(gene_id, gene_name, asbs_scope="all"):  # todo rename
                                    "-b", f"eqtls/{gene_name}-eqtl-merged.bed", "-wa"], 
                                   capture_output=True).stdout
     
-    print(f"ASBs near eQTLs with target {gene_name}:")
-    print(intersection.decode())
+    return f"ASBs near eQTLs with target {gene_name}:\n{intersection.decode()}"
+    #print(f"ASBs near eQTLs with target {gene_name}:")
+    #print(intersection.decode(), end='')
 
 if __name__ == '__main__':
     #find_asbs_near_eqtls('ENSG00000101076', 'HNF4A') # HNF4A
@@ -125,10 +126,26 @@ if __name__ == '__main__':
 
     
     #print(genes)
-    for gene_name, gene_id in genes: 
-        find_asbs_near_eqtls(gene_id, gene_name, asbs_scope="diabetes")
-        
-    # python asbs_near_eqtls.py >> diabetes_asbs.txt
 
-    
-    
+    mode = 'WINDOW_STEPS'
+    if mode == 'SINGLE':
+        for gene_name, gene_id in genes: 
+            print(find_asbs_near_eqtls(gene_id, gene_name, 2000, asbs_scope="diabetes"))
+
+        # python asbs_near_eqtls.py >> diabetes_asbs.txt
+
+    elif mode == 'WINDOW_STEPS':
+        from time import strftime, gmtime
+        window_sizes = [500 * 2**i for i in range(16)]
+        #print(window_sizes)
+        for wsize in window_sizes[11:]:
+            result = ''
+            for gene_name, gene_id in genes: 
+                result += find_asbs_near_eqtls(gene_id, gene_name, window_halfwidth=wsize, asbs_scope="diabetes")
+            with open(f'asbs_near_eqtls/w{wsize}_p{p_thr}.txt', 'w') as f:
+                f.write(result)
+            print(f'{wsize} done at {strftime("%X %x %Z", gmtime())}')
+        
+
+        
+
