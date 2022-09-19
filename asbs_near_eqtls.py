@@ -9,7 +9,8 @@ from pageloader import PageLoader
 
 def download_eqtls(gene_id, gene_name):
     eqtl_tuples = []
-    adastra_url = f'https://adastra.autosome.org/api/v5/search/snps/eqtl_gene_id/{gene_id}'
+    #adastra_url = f'https://adastra.autosome.org/api/v5/search/snps/eqtl_gene_id/{gene_id}'
+    adastra_url = f'https://adastra.autosome.org/api/v5/search/snps/eqtl_gene_name/{gene_name}'
     for eqtls_json in PageLoader(adastra_url, size=500):
         eqtl_tuples.extend((eqtl['chromosome'], eqtl['position']-1, eqtl['position'])
                            for eqtl in eqtls_json['results'])
@@ -101,8 +102,8 @@ if __name__ == '__main__':
     with open("adastra_snps/diabetes_tfs.bed", 'w'):
         pass
     for gene_name, _ in genes:
-        #print(glob.glob(f"/home/resecmo/vigg/release_Zanthar/release_dump/TF/*{gene_name}_*"))
-        for gene_bed_filename in glob.glob(f"/home/resecmo/vigg/release_Zanthar/release_dump/TF/*{gene_name}_*"):
+        #print(glob.glob(f"/home/resecmo/vigg/release_BillCipher/release_dump/TF/*{gene_name}_*"))
+        for gene_bed_filename in glob.glob(f"/home/resecmo/vigg/release_BillCipher/release_dump/TF/*{gene_name}_*"):
             df = pd.read_csv(gene_bed_filename, sep='\t', usecols=[0, 1, 2, 14, 15])  # 2 is id
             snps = []
             for i in range(df.shape[0]):
@@ -111,9 +112,9 @@ if __name__ == '__main__':
             bedwriter.write_tuples_in_bed(snps, "adastra_snps/diabetes_tfs.bed", append=True)
 
 
-    #for gene_name, gene_id in genes:
-    #    download_eqtls(gene_id, gene_name)
-    #print('eQTL data has been downloaded')
+    for gene_name, gene_id in genes:
+        download_eqtls(gene_id, gene_name)
+    print('eQTL data has been downloaded')
 
     mode = 'WINDOW_STEPS'
     if mode == 'SINGLE':
