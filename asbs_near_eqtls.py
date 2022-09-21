@@ -7,9 +7,8 @@ import bedwriter
 from pageloader import PageLoader
 
 
-def download_eqtls(gene_id, gene_name):
+def download_eqtls(gene_name):
     eqtl_tuples = []
-    #adastra_url = f'https://adastra.autosome.org/api/v5/search/snps/eqtl_gene_id/{gene_id}'
     adastra_url = f'https://adastra.autosome.org/api/v5/search/snps/eqtl_gene_name/{gene_name}'
     for eqtls_json in PageLoader(adastra_url, size=500):
         eqtl_tuples.extend((eqtl['chromosome'], eqtl['position']-1, eqtl['position'])
@@ -17,7 +16,7 @@ def download_eqtls(gene_id, gene_name):
     bedwriter.write_tuples_in_bed(eqtl_tuples, f"eqtls/{gene_name}-eqtl.bed")  # write_positions?
 
 
-def find_asbs_near_eqtls(gene_id, gene_name, window_halfwidth=2000, asbs_scope="all"):  # todo rename
+def find_asbs_near_eqtls(gene_name, window_halfwidth: int = 2000, asbs_scope="all"):  # todo rename
     """
     Searches for ASBs in vicinity of eQTLs with target `gene_name`; 
     possibly these TFs regulate `gene_name` expression?
@@ -38,7 +37,7 @@ def find_asbs_near_eqtls(gene_id, gene_name, window_halfwidth=2000, asbs_scope="
     widened_bed = subprocess.run(["bedtools", "slop", "-b", f'{window_halfwidth}',
                                   "-i", f"eqtls/{gene_name}-eqtl.bed",
                                   "-g", "/usr/share/bedtools/genomes/human.hg38.genome"],
-                                capture_output=True).stdout
+                                 capture_output=True).stdout
     with open(f"eqtls/window_beds/{gene_name}-eqtl.bed", 'wb') as f:
         f.write(widened_bed)
 
@@ -57,8 +56,27 @@ def find_asbs_near_eqtls(gene_id, gene_name, window_halfwidth=2000, asbs_scope="
                                   capture_output=True).stdout
 
     return f"ASBs near eQTLs with target {gene_name}:\n{intersection.decode()}"
-    #print(f"ASBs near eQTLs with target {gene_name}:")
-    #print(intersection.decode(), end='')
+
+
+def prepare_bed_for_tfs_subset(trait_name: str, gene_names_list, p_thr):
+    """
+    Selects all statistically significant ASBs of provided genes
+    from a local copy of ADASTRA and saves them to a .bed file
+    f"adastra_snps/{trait_name}_tfs.bed"
+    """
+
+    # Filename of the created .bed
+    bed_filename = f"adastra_snps/{trait_name}_tfs.bed"
+    with open(bed_filename, 'w'):
+        pass
+    for gene_name in gene_names_list:
+        for gene_bed_filename in glob.glob(f"/home/resecmo/vigg/release_BillCipher/release_dump/TF/*{gene_name}_*"):
+            df = pd.read_csv(gene_bed_filename, sep='\t', usecols=[0, 1, 2, 14, 15])  # 2 is id
+            snps = []
+            for i in range(df.shape[0]):
+                if (df["fdrp_bh_ref"][i] < p_thr) or (df["fdrp_bh_alt"][i] < p_thr):
+                    snps.append((df["#chr"][i], df["pos"][i] - 1, df["pos"][i], df["ID"][i], f"{gene_name}_HUMAN"))
+            bedwriter.write_tuples_in_bed(snps, bed_filename, append=True)
 
 
 if __name__ == '__main__':
@@ -100,28 +118,16 @@ if __name__ == '__main__':
 
     # P-value threshold for ADASTRA's ASBs
     p_thr = 0.05
-            
-    with open("adastra_snps/diabetes_tfs.bed", 'w'):
-        pass
-    for gene_name, _ in genes:
-        #print(glob.glob(f"/home/resecmo/vigg/release_BillCipher/release_dump/TF/*{gene_name}_*"))
-        for gene_bed_filename in glob.glob(f"/home/resecmo/vigg/release_BillCipher/release_dump/TF/*{gene_name}_*"):
-            df = pd.read_csv(gene_bed_filename, sep='\t', usecols=[0, 1, 2, 14, 15])  # 2 is id
-            snps = []
-            for i in range(df.shape[0]):
-                if ((df["fdrp_bh_ref"][i] < p_thr) or (df["fdrp_bh_alt"][i] < p_thr)):
-                    snps.append((df["#chr"][i], df["pos"][i] - 1, df["pos"][i], df["ID"][i], f"{gene_name}_HUMAN"))
-            bedwriter.write_tuples_in_bed(snps, "adastra_snps/diabetes_tfs.bed", append=True)
-
+    prepare_bed_for_tfs_subset('diabetes', [gene_name for gene_name, _ in genes], p_thr)
 
     for gene_name, gene_id in genes:
-        download_eqtls(gene_id, gene_name)
+        download_eqtls(gene_name)
     print('eQTL data has been downloaded')
 
     mode = 'WINDOW_STEPS'
     if mode == 'SINGLE':
-        for gene_name, gene_id in genes: 
-            print(find_asbs_near_eqtls(gene_id, gene_name, 2000, asbs_scope="diabetes"))
+        for gene_name, gene_id in genes:
+            print(find_asbs_near_eqtls(gene_name, 2000, asbs_scope="diabetes"))
 
         # python asbs_near_eqtls.py >> diabetes_asbs.txt
 
@@ -131,7 +137,7 @@ if __name__ == '__main__':
         for wsize in window_sizes:
             result = ''
             for gene_name, gene_id in genes: 
-                result += find_asbs_near_eqtls(gene_id, gene_name, window_halfwidth=wsize, asbs_scope="diabetes")
+                result += find_asbs_near_eqtls(gene_name, window_halfwidth=wsize, asbs_scope="diabetes")
             with open(f'asbs_near_eqtls/w{wsize}_p{p_thr}.txt', 'w') as f:
                 f.write(result)
             print(f'{wsize} done at {strftime("%X %x %Z", gmtime())}')
