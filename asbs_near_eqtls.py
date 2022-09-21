@@ -82,51 +82,42 @@ def prepare_bed_for_tfs_subset(trait_name: str, gene_names_list, p_thr):
 if __name__ == '__main__':
 
     # genes list is from https://doi.org/10.1101/2021.06.08.21258515. p.17
-    # 
-    # todo is GATA4_alt needed?
-    genes = \
-    '''ABCC8 ENSG00000006071
-    BLK ENSG00000136573
-    CEL ENSG00000170835
-    EIF2AK3 ENSG00000172071
-    GATA4 ENSG00000136574 
-    GATA4_alt ENSG00000285109
-    GATA6 ENSG00000141448
-    GCK ENSG00000106633
-    GLIS3 ENSG00000107249
-    HNF1A ENSG00000135100
-    HNF1B ENSG00000275410
-    HNF4A ENSG00000101076
-    IER3IP1 ENSG00000134049
-    INS ENSG00000254647
-    KCNJ11 ENSG00000187486
-    KLF11 ENSG00000172059
-    LMNA ENSG00000160789
-    NEUROD1 ENSG00000162992
-    NEUROG3 ENSG00000122859
-    PAX4 ENSG00000106331
-    PDX1 ENSG00000139515
-    PPARG ENSG00000132170
-    PTF1A ENSG00000168267
-    RFX6 ENSG00000185002
-    SLC19A2 ENSG00000117479
-    SLC2A2 ENSG00000163581
-    WFS1 ENSG00000109501
-    ZFP57 ENSG00000204644'''
-    
-    genes = [s.strip().split() for s in genes.split('\n')]
+    genes = {'LDL': ['АРOB', 'APOC2', 'APOE', 'LDLR', 'LPL', 'PCSK9'],
+         'HDL': ['ABCA1', 'APOA1', 'СETP', 'LIPC', 'LIPG', 'PLTP', 'SCARB1'],
+         'Height': [
+            'ANTXR1', 'ATR', 'BLM', 'CDC6', 'CDT1', 'CENPJ', 'COL1A1', 'COL1A2', 'COMP', 'CREBBP', 'DNA2',
+            'DTDST', 'EP300', 'EVC', 'EVC2', 'FBN1', 'FGFR3', 'FKBP10', 'GHR', 'KRAS', 'NBN', 'NIPBL', 'ORC1',
+            'ORC4', 'ORC6L', 'PCNT', 'PLOD2', 'PTPN11', 'RAD21', 'RAF1', 'RECQL4', 'RIT1',
+            'RNU4ATAC should remove snRNA', 'ROR2', 'SLC26A2', 'SMAD4', 'SMC3 milder form of trait, remove',
+            'SOS1 same as above', 'SRCAP', 'WRN'],
+         'Blood pressure (systolic and diastolic)': ['KCNJ1', 'SLC12A1', 'SLC12A3', 'WNK1', 'WNK4'],
+         'Crohn disease': [
+             'ATG16L1', 'CARD9', 'IL10', 'IL10RA', 'IL10RB', 'IL23R', 'IRGM', 'NOD2', 'PRDM1', 'PTPN22', 'RNF'],
+         'Ulcerative colitis': ['ATG16L1', 'CARD9', 'IL23R', 'IRGM', 'PRDM1', 'PTPN22', 'RNF186'],
+         'Type II diabetes': [
+             'ABCC8', 'BLK', 'CEL', 'EIF2AK3', 'GATA4', 'GATA6', 'GCK', 'GLIS3', 'HNF1A', 'HNF1B',
+             'HNF4A', 'IER3IP1', 'INS', 'KCNJ11', 'KLF11', 'LMNA', 'NEUROD1', 'NEUROG3', 'PAX4', 'PDX1',
+             'PPARG', 'PTF1A', 'RFX6', 'SLC19A2', 'SLC2A2', 'WFS1', 'ZFP57'],
+         'Breast cancer (selected using MutPanning26)': [
+             'AKT1', 'ARID1A', 'ATM', 'BRCA1', 'BRCA2', 'CBFB', 'CDH1',
+             'CDKN1B', 'CHEK2', 'CTCF', 'ERBB2', 'ESR1', 'FGFR2', 'FOXA1',
+             'GATA3', 'GPS2', 'HS6ST1', 'KMT2C', 'KRAS', 'LRRC37A3', 'MAP2K4',
+             'MAP3K1', 'NCOR1', 'NF1', 'NUP93', 'PALB2', 'PIK3CA', 'PTEN',
+             'RB1', 'RUNX1', 'SF3B1', 'STK11', 'TBX3', 'TP53', 'ZFP36L1']}
+
+    genes = genes['Type II diabetes']
 
     # P-value threshold for ADASTRA's ASBs
     p_thr = 0.05
-    prepare_bed_for_tfs_subset('diabetes', [gene_name for gene_name, _ in genes], p_thr)
+    prepare_bed_for_tfs_subset('diabetes', genes, p_thr)
 
-    for gene_name, gene_id in genes:
+    for gene_name in genes:
         download_eqtls(gene_name)
     print('eQTL data has been downloaded')
 
     mode = 'WINDOW_STEPS'
     if mode == 'SINGLE':
-        for gene_name, gene_id in genes:
+        for gene_name in genes:
             print(find_asbs_near_eqtls(gene_name, 2000, asbs_scope="diabetes"))
 
         # python asbs_near_eqtls.py >> diabetes_asbs.txt
@@ -136,7 +127,7 @@ if __name__ == '__main__':
         window_sizes = [500 * 2**i for i in range(16)]
         for wsize in window_sizes:
             result = ''
-            for gene_name, gene_id in genes: 
+            for gene_name in genes:
                 result += find_asbs_near_eqtls(gene_name, window_halfwidth=wsize, asbs_scope="diabetes")
             with open(f'asbs_near_eqtls/w{wsize}_p{p_thr}.txt', 'w') as f:
                 f.write(result)
