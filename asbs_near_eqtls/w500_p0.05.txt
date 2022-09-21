@@ -1,5 +1,9 @@
 ASBs near eQTLs with target ABCC8:
 ASBs near eQTLs with target BLK:
+chr8	10713980	10713981	rs4484649	HNF4A_HUMAN
+chr8	11836409	11836410	rs58631438	HNF4A_HUMAN
+chr8	11800363	11800364	rs117160301	PPARG_HUMAN
+chr8	11800367	11800368	rs118059476	PPARG_HUMAN
 ASBs near eQTLs with target CEL:
 ASBs near eQTLs with target EIF2AK3:
 ASBs near eQTLs with target GATA4:
@@ -20,9 +24,12 @@ ASBs near eQTLs with target NEUROG3:
 ASBs near eQTLs with target PAX4:
 ASBs near eQTLs with target PDX1:
 ASBs near eQTLs with target PPARG:
+chr3	12319269	12319270	rs11128599	PPARG_HUMAN
 ASBs near eQTLs with target PTF1A:
 ASBs near eQTLs with target RFX6:
 ASBs near eQTLs with target SLC19A2:
 ASBs near eQTLs with target SLC2A2:
 ASBs near eQTLs with target WFS1:
 ASBs near eQTLs with target ZFP57:
+chr6	29926144	29926145	rs2517776	HNF4A_HUMAN
+chr6	29926229	29926230	rs2517773	HNF4A_HUMAN

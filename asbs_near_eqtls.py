@@ -26,7 +26,7 @@ def find_asbs_near_eqtls(gene_id, gene_name, window_halfwidth=2000, asbs_scope="
     `"all"` for all TFs; 
     `"diabetes"` for TFs from the article.
     """
-    
+
     if asbs_scope == "all":
         asbs_filename = "adastra_snps/all_tfs.bed"
     elif asbs_scope == "diabetes":
@@ -35,7 +35,9 @@ def find_asbs_near_eqtls(gene_id, gene_name, window_halfwidth=2000, asbs_scope="
         raise ValueError("asbs_scope should be one of: \"all\", \"diabetes\"")
 
     # widen sort and merge intersecting intervals
-    widened_bed = subprocess.run(["bedtools", "slop", "-b", f'{window_halfwidth}', "-i", f"eqtls/{gene_name}-eqtl.bed"],
+    widened_bed = subprocess.run(["bedtools", "slop", "-b", f'{window_halfwidth}',
+                                  "-i", f"eqtls/{gene_name}-eqtl.bed",
+                                  "-g", "/usr/share/bedtools/genomes/human.hg38.genome"],
                                 capture_output=True).stdout
     with open(f"eqtls/window_beds/{gene_name}-eqtl.bed", 'wb') as f:
         f.write(widened_bed)
@@ -49,11 +51,11 @@ def find_asbs_near_eqtls(gene_id, gene_name, window_halfwidth=2000, asbs_scope="
                                 capture_output=True).stdout
     with open(f"eqtls/window_beds/{gene_name}-eqtl-merged.bed", 'wb') as f:
         f.write(merged_bed)
-        
+
     intersection = subprocess.run(["bedtools", "intersect", "-a", asbs_filename,
                                    "-b", f"eqtls/window_beds/{gene_name}-eqtl-merged.bed", "-wa"],
                                   capture_output=True).stdout
-    
+
     return f"ASBs near eQTLs with target {gene_name}:\n{intersection.decode()}"
     #print(f"ASBs near eQTLs with target {gene_name}:")
     #print(intersection.decode(), end='')
