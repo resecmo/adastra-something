@@ -1,5 +1,6 @@
 import glob
 import subprocess
+from time import strftime, gmtime
 
 import pandas as pd
 
@@ -26,10 +27,10 @@ def find_asbs_near_eqtls(gene_name, window_halfwidth: int = 2000, asbs_scope="al
     `"diabetes"` for TFs from the article.
     """
 
-    if asbs_scope == "all":
+    if (asbs_scope is None) or (asbs_scope == "all"):
         asbs_filename = "adastra_snps/all_tfs.bed"
     elif asbs_scope == "diabetes":
-        asbs_filename = "adastra_snps/diabetes_tfs.bed"
+        asbs_filename = f"adastra_snps/diabetes_tfs.bed"
     else:
         raise ValueError("asbs_scope should be one of: \"all\", \"diabetes\"")
 
@@ -82,38 +83,55 @@ def prepare_bed_for_tfs_subset(trait_name: str, gene_names_list, p_thr):
 if __name__ == '__main__':
 
     # genes list is from https://doi.org/10.1101/2021.06.08.21258515. p.17
-    genes = {'LDL': ['АРOB', 'APOC2', 'APOE', 'LDLR', 'LPL', 'PCSK9'],
-         'HDL': ['ABCA1', 'APOA1', 'СETP', 'LIPC', 'LIPG', 'PLTP', 'SCARB1'],
-         'Height': [
-            'ANTXR1', 'ATR', 'BLM', 'CDC6', 'CDT1', 'CENPJ', 'COL1A1', 'COL1A2', 'COMP', 'CREBBP', 'DNA2',
-            'DTDST', 'EP300', 'EVC', 'EVC2', 'FBN1', 'FGFR3', 'FKBP10', 'GHR', 'KRAS', 'NBN', 'NIPBL', 'ORC1',
-            'ORC4', 'ORC6L', 'PCNT', 'PLOD2', 'PTPN11', 'RAD21', 'RAF1', 'RECQL4', 'RIT1',
-            'RNU4ATAC should remove snRNA', 'ROR2', 'SLC26A2', 'SMAD4', 'SMC3 milder form of trait, remove',
-            'SOS1 same as above', 'SRCAP', 'WRN'],
-         'Blood pressure (systolic and diastolic)': ['KCNJ1', 'SLC12A1', 'SLC12A3', 'WNK1', 'WNK4'],
-         'Crohn disease': [
-             'ATG16L1', 'CARD9', 'IL10', 'IL10RA', 'IL10RB', 'IL23R', 'IRGM', 'NOD2', 'PRDM1', 'PTPN22', 'RNF'],
-         'Ulcerative colitis': ['ATG16L1', 'CARD9', 'IL23R', 'IRGM', 'PRDM1', 'PTPN22', 'RNF186'],
-         'Type II diabetes': [
-             'ABCC8', 'BLK', 'CEL', 'EIF2AK3', 'GATA4', 'GATA6', 'GCK', 'GLIS3', 'HNF1A', 'HNF1B',
-             'HNF4A', 'IER3IP1', 'INS', 'KCNJ11', 'KLF11', 'LMNA', 'NEUROD1', 'NEUROG3', 'PAX4', 'PDX1',
-             'PPARG', 'PTF1A', 'RFX6', 'SLC19A2', 'SLC2A2', 'WFS1', 'ZFP57'],
-         'Breast cancer (selected using MutPanning26)': [
-             'AKT1', 'ARID1A', 'ATM', 'BRCA1', 'BRCA2', 'CBFB', 'CDH1',
-             'CDKN1B', 'CHEK2', 'CTCF', 'ERBB2', 'ESR1', 'FGFR2', 'FOXA1',
-             'GATA3', 'GPS2', 'HS6ST1', 'KMT2C', 'KRAS', 'LRRC37A3', 'MAP2K4',
-             'MAP3K1', 'NCOR1', 'NF1', 'NUP93', 'PALB2', 'PIK3CA', 'PTEN',
-             'RB1', 'RUNX1', 'SF3B1', 'STK11', 'TBX3', 'TP53', 'ZFP36L1']}
+    genes = {
+        'ldl': ['АРOB', 'APOC2', 'APOE', 'LDLR', 'LPL', 'PCSK9'],
+        'hdl': ['ABCA1', 'APOA1', 'СETP', 'LIPC', 'LIPG', 'PLTP', 'SCARB1'],
+        'height': [
+           'ANTXR1', 'ATR', 'BLM', 'CDC6', 'CDT1', 'CENPJ', 'COL1A1', 'COL1A2', 'COMP', 'CREBBP', 'DNA2',
+           'DTDST', 'EP300', 'EVC', 'EVC2', 'FBN1', 'FGFR3', 'FKBP10', 'GHR', 'KRAS', 'NBN', 'NIPBL', 'ORC1',
+           'ORC4', 'ORC6L', 'PCNT', 'PLOD2', 'PTPN11', 'RAD21', 'RAF1', 'RECQL4', 'RIT1',
+           'RNU4ATAC should remove snRNA', 'ROR2', 'SLC26A2', 'SMAD4', 'SMC3 milder form of trait, remove',
+           'SOS1 same as above', 'SRCAP', 'WRN'],
+        'pressure': ['KCNJ1', 'SLC12A1', 'SLC12A3', 'WNK1', 'WNK4'],
+        'crohn': [  # K50
+            'ATG16L1', 'CARD9', 'IL10', 'IL10RA', 'IL10RB', 'IL23R', 'IRGM', 'NOD2', 'PRDM1', 'PTPN22', 'RNF'],
+        'ulcerative_colitis': ['ATG16L1', 'CARD9', 'IL23R', 'IRGM', 'PRDM1', 'PTPN22', 'RNF186'],  # K51
+        'type_ii_diabetes': [  # E11
+            'ABCC8', 'BLK', 'CEL', 'EIF2AK3', 'GATA4', 'GATA6', 'GCK', 'GLIS3', 'HNF1A', 'HNF1B',
+            'HNF4A', 'IER3IP1', 'INS', 'KCNJ11', 'KLF11', 'LMNA', 'NEUROD1', 'NEUROG3', 'PAX4', 'PDX1',
+            'PPARG', 'PTF1A', 'RFX6', 'SLC19A2', 'SLC2A2', 'WFS1', 'ZFP57'],
+        'breast_cancer': [  # C50? Malignant neoplasms of breast
+            'AKT1', 'ARID1A', 'ATM', 'BRCA1', 'BRCA2', 'CBFB', 'CDH1',
+            'CDKN1B', 'CHEK2', 'CTCF', 'ERBB2', 'ESR1', 'FGFR2', 'FOXA1',
+            'GATA3', 'GPS2', 'HS6ST1', 'KMT2C', 'KRAS', 'LRRC37A3', 'MAP2K4',
+            'MAP3K1', 'NCOR1', 'NF1', 'NUP93', 'PALB2', 'PIK3CA', 'PTEN',
+            'RB1', 'RUNX1', 'SF3B1', 'STK11', 'TBX3', 'TP53', 'ZFP36L1']
+    }
+    full_trait_names = {'ldl': 'LDL', 'hdl': 'HDL', 'height': 'Height',
+                        'pressure': 'Blood pressure (systolic and diastolic)',
+                        'crohn': 'Crohn disease',
+                        'ulcerative_colitis': 'Ulcerative colitis',
+                        'type_ii_diabetes': 'Type II diabetes',
+                        'breast_cancer': 'Breast cancer (selected using MutPanning26)'}
+    chosen_traits = ['ldl', 'hdl', 'pressure', 'crohn', 'ulcerative_colitis',  # without height - TODO broken genes
+                     'type_ii_diabetes', 'breast_cancer']
+    all_genes = set.union(*(set(genes_sublist) for trait, genes_sublist in genes.items() if trait in chosen_traits))
 
-    genes = genes['Type II diabetes']
+    i = 0
+    for gene_name in all_genes:
+        download_eqtls(gene_name)
+        i += 1
+        if i % 10 == 0:
+            print(f'{strftime("%X %x %Z", gmtime())}: '
+                  f'eQTL data has been downloaded for {i} out of {len(all_genes)} genes')
+    print('eQTL data has been downloaded')
 
+
+    genes = genes['type_ii_diabetes']
     # P-value threshold for ADASTRA's ASBs
     p_thr = 0.05
-    prepare_bed_for_tfs_subset('diabetes', genes, p_thr)
+    prepare_bed_for_tfs_subset('type_ii_diabetes', genes, p_thr)
 
-    for gene_name in genes:
-        download_eqtls(gene_name)
-    print('eQTL data has been downloaded')
 
     mode = 'WINDOW_STEPS'
     if mode == 'SINGLE':
@@ -123,7 +141,6 @@ if __name__ == '__main__':
         # python asbs_near_eqtls.py >> diabetes_asbs.txt
 
     elif mode == 'WINDOW_STEPS':
-        from time import strftime, gmtime
         window_sizes = [500 * 2**i for i in range(16)]
         for wsize in window_sizes:
             result = ''
