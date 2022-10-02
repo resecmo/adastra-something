@@ -1,0 +1,10 @@
+ASBs near eQTLs with target ATG16L1:
+chr2	228417398	228417399	rs13001792	PRDM1_HUMAN
+chr2	237858560	237858561	rs3754701	PRDM1_HUMAN
+ASBs near eQTLs with target CARD9:
+ASBs near eQTLs with target IL23R:
+ASBs near eQTLs with target IRGM:
+ASBs near eQTLs with target PRDM1:
+ASBs near eQTLs with target PTPN22:
+ASBs near eQTLs with target RNF186:
+chr1	16614580	16614581	rs1759176	PRDM1_HUMAN

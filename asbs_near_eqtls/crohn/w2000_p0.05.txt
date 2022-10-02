@@ -1,0 +1,11 @@
+ASBs near eQTLs with target ATG16L1:
+ASBs near eQTLs with target CARD9:
+ASBs near eQTLs with target IL10:
+ASBs near eQTLs with target IL10RA:
+ASBs near eQTLs with target IL10RB:
+ASBs near eQTLs with target IL23R:
+ASBs near eQTLs with target IRGM:
+ASBs near eQTLs with target NOD2:
+ASBs near eQTLs with target PRDM1:
+ASBs near eQTLs with target PTPN22:
+ASBs near eQTLs with target RNF:

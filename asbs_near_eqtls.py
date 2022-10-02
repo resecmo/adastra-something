@@ -46,13 +46,14 @@ def find_asbs_near_eqtls(gene_name, window_halfwidth: int = 2000, asbs_scope="al
     
     `asb_scope` defines range of search for asbs:
     `"all"` for all TFs; 
-    `"diabetes"` for TFs from the article.
+    `"crohn"`, `"ulcerative_colitis"`, `"type_ii_diabetes"`
+    or `"breast_cancer"` for TFs from the article.
     """
 
     if (asbs_scope is None) or (asbs_scope == "all"):
         asbs_filename = "adastra_snps/all_tfs.bed"
-    elif asbs_scope == "diabetes":
-        asbs_filename = f"adastra_snps/type_ii_diabetes_tfs.bed"
+    elif asbs_scope in ["crohn", "ulcerative_colitis", "type_ii_diabetes", "breast_cancer"]:
+        asbs_filename = f"adastra_snps/{asbs_scope}_tfs.bed"
     else:
         raise ValueError("asbs_scope should be one of: \"all\", \"diabetes\"")
 
@@ -148,21 +149,13 @@ if __name__ == '__main__':
         trait_genes = genes[trait]
         prepare_bed_for_tfs_subset(trait, trait_genes, p_thr)
 
-
-    mode = 'WINDOW_STEPS'
-    if mode == 'SINGLE':
-        for gene_name in genes['type_ii_diabetes']:
-            print(find_asbs_near_eqtls(gene_name, 2000, asbs_scope="diabetes"))
-
-        # python asbs_near_eqtls.py >> diabetes_asbs.txt
-
-    elif mode == 'WINDOW_STEPS':
-        window_sizes = [500 * 2**i for i in range(16)]
+    window_sizes = [500 * 2**i for i in range(16)]
+    for trait in ['crohn', 'ulcerative_colitis', 'type_ii_diabetes', 'breast_cancer']:
         for wsize in window_sizes:
             result = ''
-            for gene_name in genes['type_ii_diabetes']:
-                result += find_asbs_near_eqtls(gene_name, window_halfwidth=wsize, asbs_scope="diabetes")
-            with open(f'asbs_near_eqtls/w{wsize}_p{p_thr}.txt', 'w') as f:
+            for gene_name in genes[trait]:
+                result += find_asbs_near_eqtls(gene_name, window_halfwidth=wsize, asbs_scope=trait)
+            with open(f'asbs_near_eqtls/{trait}/w{wsize}_p{p_thr}.txt', 'w') as f:
                 f.write(result)
             print(f'{wsize} done at {strftime("%X %x %Z", gmtime())}')
         
