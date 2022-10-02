@@ -1,20 +1,42 @@
 import glob
 import subprocess
 from time import strftime, gmtime
+import typing
 
 import pandas as pd
+import requests
+# from urllib3.util import Retry
 
 import bedwriter
 from pageloader import PageLoader
 
 
-def download_eqtls(gene_name):
+def download_eqtls(gene_name: str):
     eqtl_tuples = []
     adastra_url = f'https://adastra.autosome.org/api/v5/search/snps/eqtl_gene_name/{gene_name}'
     for eqtls_json in PageLoader(adastra_url, size=500):
         eqtl_tuples.extend((eqtl['chromosome'], eqtl['position']-1, eqtl['position'])
                            for eqtl in eqtls_json['results'])
     bedwriter.write_tuples_in_bed(eqtl_tuples, f"eqtls/{gene_name}-eqtl.bed")  # write_positions?
+
+
+def download_eqtls_multigene(gene_names: typing.Iterable[str]):
+    s = requests.Session()
+    # retries = Retry(total=3, status_forcelist=[500])
+    # a = requests.adapters.HTTPAdapter(max_retries=retries)
+    # s.mount('https://', a)
+
+    for i, gene_name in enumerate(gene_names):
+        eqtl_tuples = []
+        adastra_url = f'https://adastra.autosome.org/api/v5/search/snps/eqtl_gene_name/{gene_name}'
+        for eqtls_json in PageLoader(adastra_url, size=500, session=s):
+            eqtl_tuples.extend((eqtl['chromosome'], eqtl['position']-1, eqtl['position'])
+                               for eqtl in eqtls_json['results'])
+        bedwriter.write_tuples_in_bed(eqtl_tuples, f"eqtls/{gene_name}-eqtl.bed")  # write_positions?
+
+        if (i+1) % 10 == 0:
+            print(f'{strftime("%X %x %Z", gmtime())}: '
+                  f'eQTL data has been downloaded for {i+1} out of {len(all_genes)} genes')
 
 
 def find_asbs_near_eqtls(gene_name, window_halfwidth: int = 2000, asbs_scope="all"):  # todo rename
@@ -30,7 +52,7 @@ def find_asbs_near_eqtls(gene_name, window_halfwidth: int = 2000, asbs_scope="al
     if (asbs_scope is None) or (asbs_scope == "all"):
         asbs_filename = "adastra_snps/all_tfs.bed"
     elif asbs_scope == "diabetes":
-        asbs_filename = f"adastra_snps/diabetes_tfs.bed"
+        asbs_filename = f"adastra_snps/type_ii_diabetes_tfs.bed"
     else:
         raise ValueError("asbs_scope should be one of: \"all\", \"diabetes\"")
 
@@ -84,8 +106,8 @@ if __name__ == '__main__':
 
     # genes list is from https://doi.org/10.1101/2021.06.08.21258515. p.17
     genes = {
-        'ldl': ['АРOB', 'APOC2', 'APOE', 'LDLR', 'LPL', 'PCSK9'],
-        'hdl': ['ABCA1', 'APOA1', 'СETP', 'LIPC', 'LIPG', 'PLTP', 'SCARB1'],
+        'ldl': ['APOB', 'APOC2', 'APOE', 'LDLR', 'LPL', 'PCSK9'],
+        'hdl': ['ABCA1', 'APOA1', 'CETB', 'LIPC', 'LIPG', 'PLTP', 'SCARB1'],
         'height': [
            'ANTXR1', 'ATR', 'BLM', 'CDC6', 'CDT1', 'CENPJ', 'COL1A1', 'COL1A2', 'COMP', 'CREBBP', 'DNA2',
            'DTDST', 'EP300', 'EVC', 'EVC2', 'FBN1', 'FGFR3', 'FKBP10', 'GHR', 'KRAS', 'NBN', 'NIPBL', 'ORC1',
@@ -117,25 +139,19 @@ if __name__ == '__main__':
                      'type_ii_diabetes', 'breast_cancer']
     all_genes = set.union(*(set(genes_sublist) for trait, genes_sublist in genes.items() if trait in chosen_traits))
 
-    i = 0
-    for gene_name in all_genes:
-        download_eqtls(gene_name)
-        i += 1
-        if i % 10 == 0:
-            print(f'{strftime("%X %x %Z", gmtime())}: '
-                  f'eQTL data has been downloaded for {i} out of {len(all_genes)} genes')
+    download_eqtls_multigene(all_genes)
     print('eQTL data has been downloaded')
 
-
-    genes = genes['type_ii_diabetes']
     # P-value threshold for ADASTRA's ASBs
     p_thr = 0.05
-    prepare_bed_for_tfs_subset('type_ii_diabetes', genes, p_thr)
+    for trait in ['crohn', 'ulcerative_colitis', 'type_ii_diabetes', 'breast_cancer']:
+        trait_genes = genes[trait]
+        prepare_bed_for_tfs_subset(trait, trait_genes, p_thr)
 
 
     mode = 'WINDOW_STEPS'
     if mode == 'SINGLE':
-        for gene_name in genes:
+        for gene_name in genes['type_ii_diabetes']:
             print(find_asbs_near_eqtls(gene_name, 2000, asbs_scope="diabetes"))
 
         # python asbs_near_eqtls.py >> diabetes_asbs.txt
@@ -144,7 +160,7 @@ if __name__ == '__main__':
         window_sizes = [500 * 2**i for i in range(16)]
         for wsize in window_sizes:
             result = ''
-            for gene_name in genes:
+            for gene_name in genes['type_ii_diabetes']:
                 result += find_asbs_near_eqtls(gene_name, window_halfwidth=wsize, asbs_scope="diabetes")
             with open(f'asbs_near_eqtls/w{wsize}_p{p_thr}.txt', 'w') as f:
                 f.write(result)
